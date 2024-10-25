@@ -5,6 +5,8 @@ import glob
 import re
 import numpy as np
 import json
+import gdown
+import tempfile
 
 # Keras
 from keras.models import load_model
@@ -18,9 +20,16 @@ from gevent.pywsgi import WSGIServer
 # Define a flask app
 app = Flask(__name__)
 
-MODEL_PATH = r'C:\Users\use\Downloads\cps\crop_health_detection_2\Crop-Disease-Detection\plant_disease_model.h5'
+# Google Drive file ID from your shared link
+# Example: For link https://drive.google.com/file/d/1ZTnZx0E_-U55PVkhOL6DK8KuYP_FUQhl/view?usp=sharing
+# The ID is: 1ZTnZx0E_-U55PVkhOL6DK8KuYP_FUQhl
+MODEL_ID = "1ZTnZx0E_-U55PVkhOL6DK8KuYP_FUQhl"
 
-# Disease information database
+# Create a temporary directory to store the downloaded model
+TEMP_DIR = tempfile.gettempdir()
+MODEL_PATH = os.path.join(TEMP_DIR, 'plant_disease_model.h5')
+
+# Disease information database (your existing DISEASE_INFO dictionary remains the same)
 DISEASE_INFO = {
     'Apple___Apple_scab': {
         'causes': [
@@ -861,18 +870,26 @@ DISEASE_INFO = {
 }
 
 
-# Load your trained model
-print(" ** Model Loading **")
+
+# Download and load model
+print(" ** Downloading Model **")
 try:
+    # Generate the direct download link
+    url = f'https://drive.google.com/uc?id={MODEL_ID}'
+    gdown.download(url, MODEL_PATH, quiet=False)
+    print(" ** Model Downloaded **")
+    
+    # Load the model
+    print(" ** Loading Model **")
     model = load_model(MODEL_PATH)
     print(" ** Model Loaded **")
 except Exception as e:
-    print(f"Error loading model: {str(e)}")
+    print(f"Error downloading/loading model: {str(e)}")
     sys.exit(1)
 
+# Keep your existing functions unchanged
 def get_disease_info(disease_key):
     """Get detailed information about a disease"""
-    print("-----disease_key---------------------",disease_key)
     if disease_key in DISEASE_INFO:
         return DISEASE_INFO[disease_key]
     else:
@@ -962,4 +979,6 @@ def upload():
     return None
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use PORT environment variable if available (for Render deployment)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
