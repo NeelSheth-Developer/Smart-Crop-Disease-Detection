@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Crop Disease Detection</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+    <div class="max-w-6xl mx-auto p-6">
+        <!-- Header Section -->
+        <header class="text-center py-8">
+            <h1 class="text-4xl font-bold text-green-800 mb-2">
+                <i class="fas fa-leaf mr-2"></i>Smart Crop Disease Detection
+            </h1>
+            <p class="text-gray-600 text-lg">Upload your crop image for instant disease detection and treatment recommendations</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Upload Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6 transform transition-all hover:scale-105">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-upload mr-2"></i>Upload Image
+                </h2>
+                <form id="upload-form" class="space-y-4">
+                    <div class="border-2 border-dashed border-green-300 rounded-xl p-8 text-center transition-all hover:border-green-500">
+                        <div id="drop-zone" class="space-y-4">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-green-500"></i>
+                            <div>
+                                <input type="file" id="file-upload" class="hidden" accept="image/*">
+                                <label for="file-upload" class="cursor-pointer">
+                                    <span class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                                        Choose File
+                                    </span>
+                                    <span class="text-gray-500 ml-2">or drag and drop</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="image-preview" class="mt-4 hidden">
+                            <img id="preview" class="max-h-64 mx-auto rounded-lg shadow-md" alt="Preview">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center">
+                        <i class="fas fa-search mr-2"></i>Analyze Image
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="hidden bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-clipboard-list mr-2"></i>Detection Results
+                </h2>
+                
+                <!-- Disease Info -->
+                <div class="bg-green-50 rounded-lg p-4 mb-6">
+                    <h3 id="crop-disease" class="text-xl font-semibold text-green-800 mb-2"></h3>
+                    <div id="severity" class="text-sm"></div>
+                </div>
+
+                <!-- Detailed Information -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-virus mr-2"></i>Causes:
+                        </h4>
+                        <ul id="causes" class="list-disc pl-5 space-y-1 text-gray-600"></ul>
+                    </div>
+
+                    <div class="bg-white rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-shield-alt mr-2"></i>Prevention Methods:
+                        </h4>
+                        <ul id="prevention" class="list-disc pl-5 space-y-1 text-gray-600"></ul>
+                    </div>
+
+                    <div class="bg-white rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-prescription-bottle mr-2"></i>Recommended Pesticides:
+                        </h4>
+                        <ul id="pesticides" class="list-disc pl-5 space-y-2 text-gray-600"></ul>
+                    </div>
+
+                    <div class="bg-white rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-cloud-sun mr-2"></i>Weather Conditions:
+                        </h4>
+                        <div id="weather" class="grid grid-cols-2 gap-4 text-gray-600"></div>
+                    </div>
+
+                    <div class="bg-white rounded-lg">
+                        <h4 class="font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-calendar-alt mr-2"></i>Occurrence Pattern:
+                        </h4>
+                        <p id="occurrence" class="text-gray-600"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Image preview functionality
+        const fileUpload = document.getElementById('file-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const preview = document.getElementById('preview');
+        const dropZone = document.getElementById('drop-zone');
+
+        // Handle file selection
+        fileUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-green-500');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-green-500');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-green-500');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                fileUpload.files = e.dataTransfer.files;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Form submission and results display
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            const fileField = document.querySelector('input[type="file"]');
+            
+            if (!fileField.files[0]) {
+                alert('Please select an image first.');
+                return;
+            }
+
+            formData.append('file', fileField.files[0]);
+
+            try {
+                // Show loading state
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
+                submitButton.disabled = true;
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                // Show results section
+                document.getElementById('results').classList.remove('hidden');
+                
+                // Update disease information with icons
+                document.getElementById('crop-disease').innerHTML = 
+                    `<i class="fas fa-seedling mr-2"></i>Crop: ${result.crop} | Disease: ${result.disease}`;
+                
+                // Update severity with color-coded badge
+                const severityColors = {
+                    'Low': 'bg-green-100 text-green-800',
+                    'Medium': 'bg-yellow-100 text-yellow-800',
+                    'High': 'bg-red-100 text-red-800'
+                };
+                const severityColor = severityColors[result.disease_info.severity_level] || 'bg-gray-100 text-gray-800';
+                document.getElementById('severity').innerHTML = `
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${severityColor}">
+                        Severity: ${result.disease_info.severity_level}
+                    </span>
+                `;
+                 console.log(result.disease_info);
+                // Update other sections with formatted content
+                document.getElementById('causes').innerHTML = result.disease_info.causes
+                    .map(cause => `<li class="text-gray-600">${cause}</li>`)
+                    .join('');
+
+                document.getElementById('prevention').innerHTML = result.disease_info.prevention
+                    .map(method => `<li class="text-gray-600">${method}</li>`)
+                    .join('');
+
+                document.getElementById('pesticides').innerHTML = result.disease_info.pesticides
+                    .map(pesticide => `
+                        <li class="text-gray-600">
+                            <span class="font-medium">${pesticide.name}</span>: 
+                            ${pesticide.application}
+                        </li>
+                    `).join('');
+
+                document.getElementById('weather').innerHTML = Object.entries(result.disease_info.weather_conditions)
+                    .map(([key, value]) => `
+                        <div class="text-gray-600">
+                            <span class="font-medium">${key.charAt(0).toUpperCase() + key.slice(1)}:</span> 
+                            ${value}
+                        </div>
+                    `).join('');
+
+                document.getElementById('occurrence').textContent = result.disease_info.occurrence_pattern;
+
+                // Reset button state
+                submitButton.innerHTML = '<i class="fas fa-search mr-2"></i>Analyze Image';
+                submitButton.disabled = false;
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error uploading image. Please try again.');
+                // Reset button state
+                submitButton.innerHTML = '<i class="fas fa-search mr-2"></i>Analyze Image';
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
